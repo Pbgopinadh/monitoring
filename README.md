@@ -118,7 +118,10 @@ prometheus.yml file contents:
 
 #my global config
 global:
-  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute. 
+
+scrape interval is after how much time the metrics should be collected.
+
   evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
   #scrape_timeout is set to the global default (10s).
 
@@ -146,6 +149,39 @@ scrape_configs:
     static_configs:
       - targets: ["localhost:9090"] this is a list and this is where we add the systemip and the port to get the metrics from
 
-example: targets: ["localhost:9090", "172.56.47.32:9100"]
+example: targets: ["localhost:9090", "172.56.47.32:9100"] here providing the IPs with ports as targets is not very practical incase of dynamic infrastructure as we cant add new IPs everytime a new instance is created.
+
+so there is a concept called service discovery mechanism.
+
+![alt text](image-1.png)
+
+as per the above screenshot we can see the below
+
+ec2_sd_configs:
+  - region: us-east-1
+    port: 9100
+
+where we are telling the prometheus to use the port 9100 to monitor the metrics from all the instances present in the us-east-1 location. so this is a practical way to get all the metrics from all the active infrastructure in our account. but, there is a catch "we have to attach a IAM role to this prometheus installed VM so that it can read all the active infrastructure possible."
+
+we can even us tags as filer for monitoring as below picture
+
+![alt text](image-2.png)
+
+
+
+
+
+
+
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+how to see the metrics offered 
+
+curl 172.31.1.183(IP of the target):9100(port of the target)/metrics
+
+When to Use Lifecycle Policies of terraform:
+
+Use create_before_destroy when you have resources that should not experience downtime.
+Use prevent_destroy for critical resources that need extra protection against accidental deletion.
+Use ignore_changes when external changes to resource attributes should not trigger Terraform updates.
