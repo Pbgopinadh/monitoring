@@ -163,11 +163,45 @@ ec2_sd_configs:
 
 where we are telling the prometheus to use the port 9100 to monitor the metrics from all the instances present in the us-east-1 location. so this is a practical way to get all the metrics from all the active infrastructure in our account. but, there is a catch "we have to attach a IAM role to this prometheus installed VM so that it can read all the active infrastructure possible."
 
-we can even us tags as filer for monitoring as below picture
+we can even us tags as filer for monitoring as below picture. where we can only monitor important infrastruxture. we use tags extensively
 
-![alt text](image-2.png)
+![alt text](image-3.png)
 
+tag: monitor means the monitor tags of the ec2-instance will be monitored.
 
+using the service discovery mechanism of prometheus saves lot of time of configyration of prometheus.yml file.
+
+scrape_configs: this is where we congfigure the machines that need to be monitored. these machines that need to be monitored is also called scrape.
+  #The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "monitor_demo"
+
+    #metrics_path defaults to '/metrics'
+    #scheme defaults to 'http'.
+
+    ec2_sd_configs:
+      - region: us-east-1
+        port: 9100
+        filters :
+          - name: tag:monitor
+            values:
+              - yes
+
+if observed in the below image we dont know the instance name which is being monitored we cant always go and search the ip adresses in the aws console its impractical when having 1000 of servers.
+
+![alt text](image-4.png)
+
+so we use a conecpt called relabelling by using the metadata
+
+![alt text](image-5.png)
+
+relabel_configs:
+    - source_labels: [__meta_ec2_tag_Name] # this will get the ec2 instance Name tag value and set it as value for the below meta data label.
+      target_label: instance_name\
+
+the configuration is as below.
+the meta data that can be used is found in the offical documentaion - https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
+
+![alt text](image-6.png)
 
 
 
