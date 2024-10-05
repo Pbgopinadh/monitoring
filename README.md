@@ -63,7 +63,7 @@ else
     echo "User 'prometheus' has been created."
 fi
 
-mkdir /opt/Prometheus
+mkdir /opt/prometheus
 
 sudo chown -R prometheus:prometheus /opt/prometheus
 
@@ -73,9 +73,9 @@ wget https://github.com/prometheus/prometheus/releases/download/v2.53.2/promethe
 
 unzip prometheus-2.53.2.linux-amd64.tar.gz
 
-sudo chown -R prometheus:prometheus /opt/Prometheus
+sudo chown -R prometheus:prometheus /opt/prometheus
 
-sudo chmod -R 755 /opt/Prometheus
+sudo chmod -R 755 /opt/prometheus
 
 cd /etc/systemd/system
 
@@ -196,12 +196,13 @@ so we use a conecpt called relabelling by using the metadata
 
 relabel_configs:
     - source_labels: [__meta_ec2_tag_Name] # this will get the ec2 instance Name tag value and set it as value for the below meta data label.
-      target_label: instance_name\
+      target_label: instance_name
 
 the configuration is as below.
 the meta data that can be used is found in the offical documentaion - https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
 
 ![alt text](image-6.png)
+
 
 
 
@@ -219,3 +220,65 @@ When to Use Lifecycle Policies of terraform:
 Use create_before_destroy when you have resources that should not experience downtime.
 Use prevent_destroy for critical resources that need extra protection against accidental deletion.
 Use ignore_changes when external changes to resource attributes should not trigger Terraform updates.
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[Unit]
+Description = nodeexpo
+
+[Service]
+User=prometheus
+WorkingDirectory=/opt/prometheus/node_exporter-1.8.2.linux-amd64
+ExecStart=/opt/prometheus/node_exporter-1.8.2.linux-amd64/node_exporter
+SyslogIdentifier=nodeexpo
+
+[Install]
+WantedBy=multi-user.target
+
+___________________________________________________________________________________________________________________________________________________________
+
+grafana: grafana is the dashboarder or it is used for vizulation of the data that is collected using the prometheues
+
+promethues collects the data and grafan is used to visualise the data.
+
+there are pre-builds fdashbords which can used out of the box.
+
+### how to download the grafana
+
+sudo vim /etc/yum.repos.d/grafana.repo
+
+[grafana]
+name=grafana
+baseurl=https://rpm.grafana.com
+repo_gpgcheck=1
+enabled=1
+gpgcheck=0 #this should be 1 if you want gpgcheck this gpg key is used to check the vailidity of the repo from which we downloading/installing the grafana from.
+<!-- gpgkey=https://rpm.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt -->
+
+sudo dnf install grafana
+
+sudo systemctl enable grafana-server.service
+
+sudo systemctl start grafana-server.service
+
+sudo systemctl status grafana-server.service
+
+#### how to configure the grafana to work with prometheues
+
+well we know that promethues doesnt have any authentication mechanism. but grfana does.
+
+also the best part of grafana is we can just confugre it to get the data from promethues instead of it collecting it from all the instances.
+
+![alt text](image-7.png)
+
+so go to connections > data sources and select the data source as prometheus and give the url used to access the prometheus thats it we can confugred prometheus with grafana.
+
+creating graphana dashboards via code is also possible.
+
+cpu utilization = 100 - (avg by (instance_name) (rate(node_cpu_seconds_total{instance_name="grafana", mode="idle"}[5m]) * 100))
+
